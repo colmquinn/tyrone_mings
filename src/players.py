@@ -33,6 +33,9 @@ def bio_player_pull(pageSoup, player_id):
                 POB = row.select('td')[0].get_text().strip()
                 COB = row.select('td')[0].select('img')[0]['alt']
 
+            if row.select('th')[0].get_text().strip() == "Position:":
+                position = row.select('td')[0].get_text().strip()
+
             if row.select('th')[0].get_text().strip() == "Age:":
                 age = int(row.select('td')[0].get_text().strip())
 
@@ -162,15 +165,19 @@ def current_football_bio_player_pull(pageSoup, player_id):
 
     if contract_expires != None:
         if contract_expires != "-":
-            day_expires, month_expires, year_expires = contract_expires.split(".")
-            contract_expires = datetime.date(int(year_expires), int(month_expires), int(day_expires))
+            year_expired = int(contract_expires[len(contract_expires)-4:])
+            month_expired = month_to_number(contract_expires.split(" ")[0])
+            day_expired = int(contract_expires.split(" ")[1].split(",")[0])
+            contract_expires = datetime.date(year_expired, month_expired, day_expired)
         else:
             contract_expires = None
 
     if loan_contract_expiry != None:
         if loan_contract_expiry != "-":
-            day_expires, month_expires, year_expires = loan_contract_expiry.split(".")
-            loan_contract_expiry = datetime.date(int(year_expires), int(month_expires), int(day_expires))
+            year_expires = int(loan_contract_expiry[len(loan_contract_expiry)-4:])
+            month_expires = month_to_number(loan_contract_expiry.split(" ")[0])
+            day_expires = int(loan_contract_expiry.split(" ")[1].split(",")[0])
+            loan_contract_expiry = datetime.date(year_expires, month_expires, day_expires)
         else:
             loan_contract_expiry = None
 
@@ -215,7 +222,7 @@ def transfer_history_pull(pageSoup, player_id):
         if not_first_row:
             not_first_row = True
 
-            for row in box.select('tr')[2:]:
+            for row in box.select('tr')[1:]:
                 try:
                     transfered_from_value = row.select('td')[4].select('a')[0].get('href').split("/")[1].replace("-", " ")
 #                 if transfered_from_value == ""
@@ -223,21 +230,21 @@ def transfer_history_pull(pageSoup, player_id):
                 except:
                     pass
 
-            for row in box.select('tr')[2:]:
+            for row in box.select('tr')[1:]:
                 try:
-                    transferred_to_value = row.select('td')[8].select('a')[0].get('href').split("/")[1].replace("-", " ")
+                    transferred_to_value = row.select('td')[7].select('a')[0].get('href').split("/")[1].replace("-", " ")
                     transferred_to.append(transferred_to_value)
                 except:
                     pass
 
-            for row in box.select('tr')[2:]:
+            for row in box.select('tr')[1:]:
                 try:
                     market_values_value = row.select('td.zelle-mw')[0].get_text()#.select('img')[0].get('alt')
 
                     if "m" in market_values_value:
                         market_values_value = int( float(market_values_value.replace("€","").replace("m","")) * 1000000 )
-                    elif "k" in market_values_value:
-                        market_values_value = int(market_values_value.replace("€","").replace("k","")) * 1000
+                    elif "Th." in market_values_value:
+                        market_values_value = int(market_values_value.replace("€","").replace("Th.","")) * 1000
                     elif "-":
                         market_values_value = 0
 
@@ -249,11 +256,11 @@ def transfer_history_pull(pageSoup, player_id):
 
 
         ## grab COUNTRY TO
-            for row in box.select('tr')[2:]:
+            for row in box.select('tr')[1:]:
                 try:
-                    no_images = len(row.select('td')[7].select('img'))
+                    no_images = len(row.select('td')[6].select('img'))
                     if no_images > 0:
-                        country_to.append(row.select('td')[7].select('img')[0].get('title').lower())
+                        country_to.append(row.select('td')[6].select('img')[0].get('title').lower())
                     else:
                         country_to.append("no country")
                 except:
@@ -261,7 +268,7 @@ def transfer_history_pull(pageSoup, player_id):
 
 
         ## grab COUNTRY FROM
-            for row in box.select('tr')[2:]:
+            for row in box.select('tr')[1:]:
                 try:
                     no_images = len(row.select('td')[3].select('img'))
                     if no_images > 0:
@@ -273,7 +280,7 @@ def transfer_history_pull(pageSoup, player_id):
 
 
         ## grab TRANSFER FEE
-        for row in box.select('tr')[2:]:
+        for row in box.select('tr')[1:]:
             try:
                 transfer_fees_raw = row.select('td.zelle-abloese')[0].get_text()
                 transfer_fees.append(transfer_fees_raw)
@@ -284,16 +291,13 @@ def transfer_history_pull(pageSoup, player_id):
         ## grab TRANSFER DATE
         for row in box.select('tr')[1:]:
             try:
-                date_raw = ""
-                date_raw = row.select('td.show-for-small')[0].get_text().strip()#.get_text())#.select('img')[0].get('alt')
-                if 'Date' in date_raw:
-
-                    date_raw = date_raw.split(": ")[1]
-                    year_of_transfer = int(date_raw[len(date_raw)-4:])
-                    month_of_transfer = month_to_number(date_raw.split(" ")[0])
-                    day_of_transfer = int(date_raw.split(" ")[1].split(",")[0])
-                    transfer_date = datetime.date(year_of_transfer, month_of_transfer, day_of_transfer)
-                    transfer_dates.append(transfer_date)
+                date_raw = "" #removed if clause to get this to work. Is it still necessary?
+                date_raw = row.select('td')[1].get_text().strip()#.get_text())#.select('img')[0].get('alt')
+                year_of_transfer = int(date_raw[len(date_raw)-4:])
+                month_of_transfer = month_to_number(date_raw.split(" ")[0])
+                day_of_transfer = int(date_raw.split(" ")[1].split(",")[0])
+                transfer_date = datetime.date(year_of_transfer, month_of_transfer, day_of_transfer)
+                transfer_dates.append(transfer_date)
             except:
                 pass
 
@@ -336,7 +340,7 @@ def transfer_history_pull(pageSoup, player_id):
             if "m" in transfer_fees[t]:
                 transfer_fees_new.append( int( float( transfer_fees[t].replace("Loan fee:", "").replace("€", "").replace("m", "") ) * 1000000 ) )
             else:
-                transfer_fees_new.append( int( transfer_fees[t].replace("Loan fee:", "").replace("€", "").replace("k", "") ) * 1000 )
+                transfer_fees_new.append( int( transfer_fees[t].replace("Loan fee:", "").replace("€", "").replace("Th.", "") ) * 1000 )
 
         elif transfer_fees[t] == "?":
             transfer_fees_new.append(market_values[t])
@@ -344,8 +348,8 @@ def transfer_history_pull(pageSoup, player_id):
         elif "m" in transfer_fees[t]:
             transfer_fees_new.append( int( float( transfer_fees[t].replace("€", "").replace("m", "") ) * 1000000 ) )
 
-        elif "k" in transfer_fees[t]:
-            transfer_fees_new.append( int( transfer_fees[t].replace("Loan fee:", "").replace("€", "").replace("k", "") ) * 1000 )
+        elif "Th." in transfer_fees[t]:
+            transfer_fees_new.append( int( transfer_fees[t].replace("Loan fee:", "").replace("€", "").replace("Th.", "") ) * 1000 )
 
         else:
             transfer_fees_new.append(transfer_fees[t])
@@ -361,7 +365,7 @@ def transfer_history_pull(pageSoup, player_id):
         else:
             internal_transfer.append("external")
 
-    country_from = country_from[:-1]
+    ## this seems to break this function. Is it still necessary country_from = country_from[:-1]
 
     DOB = None
 

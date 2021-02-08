@@ -613,26 +613,22 @@ def performance_history_pull(base_url, player_id, player_dob):
     performance_data['player_id'] = player_id
 
     age = []
-    if player_dob != None:
-        for s in performance_data.season:
+    for s in performance_data.season:
 
-            if "/" in s:
-                year = int(s.split("/")[0])
-                if year < 30:
-                    year = 2000 + year
-                else:
-                    year = 1900 + year
-                competition_start_date = datetime.date(year, 8, 1)
-
+        if "/" in s:
+            year = int(s.split("/")[0])
+            if year < 30:
+                year = 2000 + year
             else:
-                year = int(s)
-                competition_start_date = datetime.date(year, 4, 1)
+                year = 1900 + year
+            competition_start_date = datetime.date(year, 8, 1)
 
-            age.append(calculate_age(player_dob, competition_start_date))
-        
-    else:
-        age = None
-        
+        else:
+            year = int(s)
+            competition_start_date = datetime.date(year, 4, 1)
+
+        age.append(calculate_age(player_dob, competition_start_date))
+
     performance_data['age'] = age
 
     return(performance_data)
